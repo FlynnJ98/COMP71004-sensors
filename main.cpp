@@ -1,6 +1,15 @@
 
-/* Includes */
+/*
+This program will get sensor data and print it on the screen when a particular key is pressed on the keyboard. 
+The "CTRL B" key will print the sensor data to the terminal in this case. It will get sensor data such as
+Temperature, Humidity, accelerometer & range or distance. We use a interrupt function to control when the 
+Particular key is pressed on the screen the program jumps to this and prints the data to the terminal. 
+*/
+
+//Includes 
 #include "mbed.h"
+#include "string.h"
+#include <cstdio>
 #include "HTS221Sensor.h"
 #include "LPS22HBSensor.h"
 #include "LSM6DSLSensor.h"
@@ -16,7 +25,17 @@ static LIS3MDL magnetometer(&devI2c, 0x3C);
 static DigitalOut shutdown_pin(PC_6);
 static VL53L0X range(&devI2c, &shutdown_pin, PC_7, 0x52);
 
+UnbufferedSerial pc(USBTX, USBRX); // provides access to UART functionality. 
 
+char che;
+volatile char parse = 0;
+
+void PCinterrupt(){ // interrupt the program when the value is one or key is pressed. 
+    if(pc.readable()){
+        pc.read(&che, 1);
+        parse = 1;
+    }
+}
 // functions to print sensor data
 void print_t_rh(){
     float value1, value2;
@@ -30,9 +49,9 @@ void print_t_rh(){
 }
 
 void print_mag(){
-    int32_t axes[3];
+    int32_t axes[3]; // intitialise axes data. 
     magnetometer.get_m_axes(axes);
-    printf("LIS3MDL [mag/mgauss]:    %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
+    printf("LIS3MDL [mag/mgauss]:    %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]); // print data of axes's
 
 }
 
@@ -52,7 +71,7 @@ void print_distance(){
     uint32_t distance;
     int status = range.get_distance(&distance);
     if (status == VL53L0X_ERROR_NONE) {
-        printf("VL53L0X [mm]:            %6ld\r\n", distance);
+        printf("VL53L0X [mm]:            %6u\r\n", distance);
     } else {
         printf("VL53L0X [mm]:                --\r\n");
     }
@@ -60,6 +79,9 @@ void print_distance(){
 
 /* Simple main function */
 int main() {
+
+    pc.attach(&PCinterrupt); // attach an interrupt function
+
     uint8_t id;
     float value1, value2;
 
@@ -100,7 +122,25 @@ int main() {
     print_distance();
     printf("\r\n");
     
-    while(1) {
+    while(1) { // while the value is 1, execute the loop
+        if(parse){
+            switch (che) { // switch case for Character B
+                case 'B':
+                    printf("\n\r--- Reading sensor values ---\n\r"); ; // prints sensor data 
+                    print_t_rh();
+                    print_mag();
+                    print_accel();
+                    print_gyro();
+                    print_distance();
+                    printf("\r\n");
+                    break;
+                default:
+                    printf(" No Data, press CTRL B for Sensor Data \r\n"); // If any Key other can CTRL B is pressed, print this message. 
+                    break;            
+            }
+            parse = 0; // resets so the terminal does not keep printing the values
+        }
+
+        }
         wait_us(500000);
     }
-}
