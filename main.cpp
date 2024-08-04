@@ -2,11 +2,12 @@
 /*
 This program will get sensor data and print it on the screen when a particular key is pressed on the keyboard. 
 The "CTRL B" key will print the sensor data to the terminal in this case. It will get sensor data such as
-Temperature, Humidity, accelerometer & range or distance. We use a interrupt function to control when the 
+Temperature, Humidity, accelerometer & range/ distance. We use a interrupt function to control when the 
 Particular key is pressed on the screen the program jumps to this and prints the data to the terminal. 
+A while 1 loop was used with a switch case to have the sensor data printed when the key is pressed. 
 */
 
-//Includes 
+//Includes the following
 #include "mbed.h"
 #include "string.h"
 #include <cstdio>
@@ -27,13 +28,13 @@ static VL53L0X range(&devI2c, &shutdown_pin, PC_7, 0x52);
 
 UnbufferedSerial pc(USBTX, USBRX); // provides access to UART functionality. 
 
-char che;
-volatile char parse = 0;
+char che; // declares a character called Che. 
+volatile char parse = 0; // initialises the parse variable with 0. Volatile means it can change at any time. 
 
 void PCinterrupt(){ // interrupt the program when the value is one or key is pressed. 
-    if(pc.readable()){
-        pc.read(&che, 1);
-        parse = 1;
+    if(pc.readable()){ // checks if the data can be read by the pc
+        pc.read(&che, 1); // if readable, store in che 
+        parse = 1; // sets the parse variable to 1
     }
 }
 // functions to print sensor data
@@ -81,7 +82,7 @@ void print_distance(){
 int main() {
 
     pc.attach(&PCinterrupt); // attach an interrupt function
-
+// initialising sensors and gyroscope
     uint8_t id;
     float value1, value2;
 
